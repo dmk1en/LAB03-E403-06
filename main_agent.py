@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from dotenv import load_dotenv
 from src.agent.agent import ReActAgent
@@ -6,6 +7,7 @@ from src.tools.ecommerce_tools import ECOMMERCE_TOOLS_SPEC
 from src.core.openai_provider import OpenAIProvider
 from src.core.local_provider import LocalProvider
 from src.core.gemini_provider import GeminiProvider
+from src.telemetry.metrics import tracker
 
 
 def get_provider():

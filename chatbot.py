@@ -5,7 +5,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-# from src.core.gemini_provider import GeminiProvider
+from src.core.gemini_provider import GeminiProvider
 from src.core.openai_provider import OpenAIProvider
 from src.telemetry.logger import logger
 from src.telemetry.metrics import tracker
