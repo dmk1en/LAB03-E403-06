@@ -126,13 +126,11 @@ def run_tests():
             # Token & cost summary
             summary = tracker.get_session_summary()
             if summary:
-                print(f"\n📊 TOKEN & COST SUMMARY (Test Case {tc['id']}):")
-                print(f"   LLM calls      : {summary['calls']}")
-                print(f"   Prompt tokens  : {summary['prompt_tokens']:,}")
-                print(f"   Output tokens  : {summary['completion_tokens']:,}")
-                print(f"   Total tokens   : {summary['total_tokens']:,}")
-                print(f"   Estimated cost : ${summary['total_cost_usd']:.6f} USD")
-                print(f"   Total latency  : {summary['total_latency_ms']:,} ms")
+                print(f"\n📊 TELEMETRY DASHBOARD (Test Case {tc['id']}):")
+                print(f"   Độ trễ trung bình (P50)        : {summary['total_latency_ms']} ms")
+                print(f"   Độ trễ tối đa (P99)           : {summary['total_latency_ms']} ms (single test case)")
+                print(f"   Số token trung bình mỗi task  : {summary['total_tokens']}")
+                print(f"   Tổng chi phí test             : ${summary['total_cost_usd']:.6f}")
             print("*"*80 + "\n")
             
             if choice_int == 0:  # Pause một chút nếu chạy toàn bộ 5 case để API đỡ nóng
