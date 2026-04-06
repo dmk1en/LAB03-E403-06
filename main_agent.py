@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 from src.agent.agent import ReActAgent
 from src.tools.ecommerce_tools import ECOMMERCE_TOOLS_SPEC
 from src.core.openai_provider import OpenAIProvider
-from src.core.local_provider import LocalProvider
-from src.core.gemini_provider import GeminiProvider
+# from src.core.local_provider import LocalProvider
+# from src.core.gemini_provider import GeminiProvider
 from src.telemetry.metrics import tracker
 
 
@@ -82,6 +82,12 @@ def run_tests():
             "level": "Tính toán",
             "desc": "Test Tool Tính tổng tiền mới",
             "query": "Tính giúp tôi tổng tiền nếu tôi mua 5 chiếc điện thoại iPhone, giá mỗi cái là 25000000 VND."
+        },
+        {
+            "id": 7,
+            "level": "API Nâng cao",
+            "desc": "Kết nối API Internet lấy Tỷ giá thực tế",
+            "query": "Khách nước ngoài qua Việt Nam ngỏ ý muốn mua 1 cái Macbook giá 35 triệu VNĐ. Hãy quy đổi 35 triệu VNĐ đó ra tiền đô la USD báo cho khách giúp tôi nhé."
         }
     ]
 
@@ -90,11 +96,11 @@ def run_tests():
         print("📋 MENU CHỌN TEST CASE ".center(60, "="))
         for tc in test_cases:
             print(f"[{tc['id']}] Khúc {tc['level']} - {tc['desc']}")
-        print("[0] Chạy TẤT CẢ 6 Test Cases lần lượt")
+        print("[0] Chạy TẤT CẢ 7 Test Cases lần lượt")
         print("[q] Thoát chương trình")
         print("="*60)
         
-        choice = input("👉 Mời nhập ID (0-6, hoặc 'q'): ").strip().lower()
+        choice = input("👉 Mời nhập ID (0-7, hoặc 'q'): ").strip().lower()
         
         if choice == 'q' or choice == 'quit':
             print("👋 Đã thoát test.")
@@ -108,10 +114,10 @@ def run_tests():
             
         if choice_int == 0:
             target_cases = test_cases
-        elif 1 <= choice_int <= 6:
+        elif 1 <= choice_int <= 7:
             target_cases = [test_cases[choice_int - 1]]
         else:
-            print("❌ Không có test case này. Vui lòng nhập từ 0-6.")
+            print("❌ Không có test case này. Vui lòng nhập từ 0-7.")
             continue
 
         for tc in target_cases:

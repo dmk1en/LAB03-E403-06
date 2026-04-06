@@ -32,6 +32,27 @@ def calc_total_price(price: float, quantity: int) -> str:
     total = price * quantity
     return f"Tổng tiền cho {quantity} sản phẩm là {total:,.0f} VND."
 
+def convert_currency(amount: float, from_currency: str, to_currency: str) -> str:
+    """Lên mạng lấy tỷ giá và quy đổi tiền tệ qua API Internet."""
+    import urllib.request
+    import json
+    try:
+        from_c = from_currency.upper()
+        to_c = to_currency.upper()
+        url = f"https://api.exchangerate-api.com/v4/latest/{from_c}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read())
+            rates = data.get("rates", {})
+            if to_c in rates:
+                rate = rates[to_c]
+                result = amount * rate
+                return f"{amount:,.2f} {from_c} bằng khoảng {result:,.2f} {to_c} (Theo tỷ giá {rate} lấy trên mạng Internet)."
+            else:
+                return f"ERROR: Không hỗ trợ tỷ giá {to_c}"
+    except Exception as e:
+        return f"ERROR lỗi gọi API: {str(e)}"
+
 # JSON Spec để đút cho Agent nhận diện
 ECOMMERCE_TOOLS_SPEC = [
     {
@@ -53,5 +74,10 @@ ECOMMERCE_TOOLS_SPEC = [
         "name": "calc_total_price",
         "description": "Tính tổng tiền sản phẩm. Đầu vào đòi 2 tham số: `price` dạng float (giá 1 sản phẩm) và `quantity` dạng int (số lượng sản phẩm). Trả về tổng tiền (vnd) của các sản phẩm đó.",
         "parameters": "price: float, quantity: int"
+    },
+    {
+        "name": "convert_currency",
+        "description": "Kết nối Internet API để tính tỷ giá ngoại tệ thật. Trả về kết quả sau quy đổi. Đầu vào: `amount` (số tiền dạng float), `from_currency` (Mã tiền gốc như 'USD', 'VND'), `to_currency` (Mã tiền đích như 'VND', 'EUR'). Thường dùng để quy tỷ giá tiền hàng.",
+        "parameters": "amount: float, from_currency: string, to_currency: string"
     }
 ]

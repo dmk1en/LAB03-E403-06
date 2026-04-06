@@ -61,6 +61,7 @@ class ReActAgent:
         system_prompt = self.get_system_prompt()
         current_prompt = user_input
         steps = 0
+        consecutive_errors = 0
 
         while steps < self.max_steps:
             # Generate LLM response
@@ -108,13 +109,35 @@ class ReActAgent:
                 step_entry["action"] = f"{tool_name}({args_str})"
                 step_entry["observation"] = obs
 
-                # Pass back the loop
-                current_prompt += f"\n\n{content}\nObservation: {obs}\n"
+                if obs.startswith("ERROR"):
+                    consecutive_errors += 1
+                    logger.log_event("AGENT_ERROR_RETRY", {"error": obs, "retry": consecutive_errors})
+                    print(f"⚠️ [Tự động sửa lỗi]: Phát hiện lỗi từ Tool. Ép LLM sửa sai (Lần {consecutive_errors}/3)...")
+                    
+                    if consecutive_errors >= 3:
+                        logger.log_event("AGENT_END", {"steps": steps, "status": "FAIL_RETRY"})
+                        return f"Thất bại: LLM không tự sửa được lỗi sau 3 lần. Lỗi cuối: {obs}"
+                    
+                    current_prompt += f"\n\n{content}\nObservation: {obs}\nSYSTEM WARNING: Lỗi khi gọi hàm! Hãy đọc kỹ mô tả, số lượng và kiểu tham số của hàm `{tool_name}` trong System prompt rồi viết lời giải lại cho đúng."
+                    self.trace.append(step_entry)
+                    continue
+                else:
+                    consecutive_errors = 0 
+                    current_prompt += f"\n\n{content}\nObservation: {obs}\n"
             else:
-                # LLM bị ảo giác, không tuân thủ định dạng
-                logger.log_event("AGENT_ERROR_FORMAT", {"content": content})
+                consecutive_errors += 1
+                logger.log_event("AGENT_ERROR_FORMAT", {"content": content, "retry": consecutive_errors})
+                print(f"⚠️ [Tự động sửa lỗi]: Sai vỡ Format ReAct. Ép LLM nắn lại (Lần {consecutive_errors}/3)...")
+                
+                if consecutive_errors >= 3:
+                    logger.log_event("AGENT_END", {"steps": steps, "status": "FAIL_FORMAT"})
+                    return "Thất bại: LLM liên tục viết sai Format ReAct 3 lần. Nghi ngờ Ảo giác nặng."
+
                 step_entry["error"] = "Format error – missing Action or Final Answer"
-                current_prompt += f"\n\n{content}\nObservation: ERROR - Bạn đã quên định dạng (Action: tool_name(args)) hoặc quên gọi Final Answer:. Vui lòng tuân thủ chặt chẽ định dạng.\n"
+                current_prompt += f"\n\n{content}\nObservation: ERROR - Bạn đã quên ghi định dạng đúng (Action: tool_name(args)) hoặc quên gọi chữ Final Answer:. Xin hãy viết lại định dạng.\n"
+                
+                self.trace.append(step_entry)
+                continue
 
             self.trace.append(step_entry)
 
@@ -128,7 +151,7 @@ class ReActAgent:
         """
         try:
             # Local import dể tránh rác context. Khởi tạo kết nối toolkit.
-            from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping, calc_total_price
+            from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping, calc_total_price, convert_currency
             
             if tool_name == "check_stock":
                 # args thường có dạng 'iphone' hoặc "iphone"
@@ -159,6 +182,19 @@ class ReActAgent:
                 price = float(split_args[0])
                 quantity = int(split_args[1])
                 res = calc_total_price(price, quantity)
+                return str(res)
+                
+            elif tool_name == "convert_currency":
+                split_args = [a.strip("'\" ") for a in args.split(",")]
+                if len(split_args) < 3:
+                    return "ERROR: convert_currency cần đúng 3 tham số: amount, from_currency, to_currency"
+                try:
+                    amount = float(split_args[0])
+                except ValueError:
+                    return "ERROR: Lỗi tham số. Biến `amount` phải là kiểu số Float."
+                from_c = split_args[1]
+                to_c = split_args[2]
+                res = convert_currency(amount, from_c, to_c)
                 return str(res)
 
             else:

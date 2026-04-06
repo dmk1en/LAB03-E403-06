@@ -1,7 +1,7 @@
 import time
 import os
 from typing import Dict, Any, Optional, Generator
-from llama_cpp import Llama
+# from llama_cpp import Llama
 from src.core.llm_provider import LLMProvider
 
 class LocalProvider(LLMProvider):
