@@ -20,27 +20,32 @@ class ReActAgent:
 
     def get_system_prompt(self) -> str:
         """
-        System prompt áp dụng cấu trúc 5 phần (Identity, Capabilities, Instructions, Constraints, Output format)
+        System prompt tiếng Việt theo cấu trúc 5 phần (Identity, Capabilities, Instructions, Constraints, Output format)
         giúp Agent hoạt động ổn định và bám sát định dạng ReAct.
         """
         tool_descriptions = "\n".join([f"- {t['name']}: {t['description']}" for t in self.tools])
         
         return f"""
-        1. Identity: "You are a helpful and precise E-commerce Assistant."
-        
-        2. Capabilities: "Tools available to you:
+        1. Identity: "Bạn là một trợ lý thương mại điện tử (E-commerce Assistant) chính xác và hữu ích."
+
+        2. Capabilities: "Các công cụ bạn có thể sử dụng:
         {tool_descriptions}"
-        
-        3. Instructions: "Break goals into sub-tasks. Think step-by-step. Always use tools to fetch real data (stock, discount, shipping). Stop khi đã thu thập đủ evidence."
-        
-        4. Constraints: "Max {self.max_steps} tool calls. Never invent or hallucinate product details, prices, or stock. Nếu không tìm thấy thông tin, hãy nói rõ."
-        
-        5. Output format: "You must strictly follow this exact ReAct format for your output:
-        Thought: your line of reasoning about what to do next.
+
+        3. Instructions: "Hãy chia mục tiêu thành các bước nhỏ. Suy nghĩ từng bước một cách logic.
+        Luôn sử dụng tool để lấy dữ liệu thực (tồn kho, giảm giá, vận chuyển).
+        Dừng lại khi đã thu thập đủ thông tin cần thiết."
+
+        4. Constraints: "Tối đa {self.max_steps} lần gọi tool.
+        Không được tự bịa (hallucinate) thông tin về sản phẩm, giá hoặc tồn kho.
+        Nếu không tìm thấy thông tin, hãy nói rõ ràng với người dùng."
+
+        5. Output format: "Bạn PHẢI tuân thủ CHÍNH XÁC định dạng ReAct sau:
+
+        Thought: suy nghĩ của bạn về bước tiếp theo.
         Action: tool_name(arguments)
-        Observation: result of the tool call (Wait for user/system to provide this).
-        ... (repeat Thought/Action/Observation if needed)
-        Final Answer: your final comprehensive response to the user."
+        Observation: kết quả từ tool (chờ hệ thống cung cấp).
+        ... (lặp lại Thought/Action/Observation nếu cần)
+        Final Answer: câu trả lời cuối cùng đầy đủ cho người dùng."
         """
 
     def run(self, user_input: str) -> str:
@@ -123,7 +128,7 @@ class ReActAgent:
         """
         try:
             # Local import dể tránh rác context. Khởi tạo kết nối toolkit.
-            from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping
+            from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping, calc_total_price
             
             if tool_name == "check_stock":
                 # args thường có dạng 'iphone' hoặc "iphone"
@@ -146,6 +151,16 @@ class ReActAgent:
                 res = calc_shipping(weight, dest)
                 return str(res)
                 
+            elif tool_name == "calc_total_price":
+                # args ví dụ: 15000000, 2 (price, quantity)
+                split_args = [a.strip("'\" ") for a in args.split(",")]
+                if len(split_args) < 2:
+                    return "ERROR: calc_total_price cần 2 tham số: price, quantity"
+                price = float(split_args[0])
+                quantity = int(split_args[1])
+                res = calc_total_price(price, quantity)
+                return str(res)
+
             else:
                 return f"ERROR: Tool '{tool_name}' không tồn tại. Hãy chắc chắn bạn gọi tool có trong list."
         except Exception as e:

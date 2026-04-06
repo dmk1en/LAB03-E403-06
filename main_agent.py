@@ -76,6 +76,12 @@ def run_tests():
             "level": "Ngoại lệ",
             "desc": "Hội thoại thông thường không cần Tool",
             "query": "Chào em, dạo này em bán hàng có tốt không? Có hay bị kẹt đơn không?"
+        },
+        {
+            "id": 6,
+            "level": "Tính toán",
+            "desc": "Test Tool Tính tổng tiền mới",
+            "query": "Tính giúp tôi tổng tiền nếu tôi mua 5 chiếc điện thoại iPhone, giá mỗi cái là 25000000 VND."
         }
     ]
 
@@ -84,11 +90,11 @@ def run_tests():
         print("📋 MENU CHỌN TEST CASE ".center(60, "="))
         for tc in test_cases:
             print(f"[{tc['id']}] Khúc {tc['level']} - {tc['desc']}")
-        print("[0] Chạy TẤT CẢ 5 Test Cases lần lượt")
+        print("[0] Chạy TẤT CẢ 6 Test Cases lần lượt")
         print("[q] Thoát chương trình")
         print("="*60)
         
-        choice = input("👉 Mời nhập ID (0-5, hoặc 'q'): ").strip().lower()
+        choice = input("👉 Mời nhập ID (0-6, hoặc 'q'): ").strip().lower()
         
         if choice == 'q' or choice == 'quit':
             print("👋 Đã thoát test.")
@@ -102,10 +108,10 @@ def run_tests():
             
         if choice_int == 0:
             target_cases = test_cases
-        elif 1 <= choice_int <= 5:
+        elif 1 <= choice_int <= 6:
             target_cases = [test_cases[choice_int - 1]]
         else:
-            print("❌ Không có test case này. Vui lòng nhập từ 0-5.")
+            print("❌ Không có test case này. Vui lòng nhập từ 0-6.")
             continue
 
         for tc in target_cases:
@@ -126,13 +132,11 @@ def run_tests():
             # Token & cost summary
             summary = tracker.get_session_summary()
             if summary:
-                print(f"\n📊 TOKEN & COST SUMMARY (Test Case {tc['id']}):")
-                print(f"   LLM calls      : {summary['calls']}")
-                print(f"   Prompt tokens  : {summary['prompt_tokens']:,}")
-                print(f"   Output tokens  : {summary['completion_tokens']:,}")
-                print(f"   Total tokens   : {summary['total_tokens']:,}")
-                print(f"   Estimated cost : ${summary['total_cost_usd']:.6f} USD")
-                print(f"   Total latency  : {summary['total_latency_ms']:,} ms")
+                print(f"\n📊 TELEMETRY DASHBOARD (Test Case {tc['id']}):")
+                print(f"   Độ trễ trung bình (P50)        : {summary['total_latency_ms']} ms")
+                print(f"   Độ trễ tối đa (P99)           : {summary['total_latency_ms']} ms (single test case)")
+                print(f"   Số token trung bình mỗi task  : {summary['total_tokens']}")
+                print(f"   Tổng chi phí test             : ${summary['total_cost_usd']:.6f}")
             print("*"*80 + "\n")
             
             if choice_int == 0:  # Pause một chút nếu chạy toàn bộ 5 case để API đỡ nóng
