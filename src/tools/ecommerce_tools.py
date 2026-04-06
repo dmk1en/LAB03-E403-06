@@ -25,6 +25,13 @@ def calc_shipping(weight: float, destination: str) -> float:
         return base_cost + 30000
     return base_cost + 50000
 
+def calc_total_price(price: float, quantity: int) -> str:
+    """
+    Tính tổng tiền dựa trên giá và số lượng.
+    """
+    total = price * quantity
+    return f"Tổng tiền cho {quantity} sản phẩm là {total:,.0f} VND."
+
 # JSON Spec để đút cho Agent nhận diện
 ECOMMERCE_TOOLS_SPEC = [
     {
@@ -41,5 +48,10 @@ ECOMMERCE_TOOLS_SPEC = [
         "name": "calc_shipping",
         "description": "Tính phí vận chuyển của đơn hàng. Đầu vào đòi 2 tham số: `weight` dạng float (cân nặng kiện hàng theo kg) và `destination` dạng string (Nơi đến như 'Hanoi'). Trả về tổng tiền phí giao hàng bằng VNĐ (float). Gọi tool này cộng vào bước cuối cùng.",
         "parameters": "weight: float, destination: string"
+    },
+    {
+        "name": "calc_total_price",
+        "description": "Tính tổng tiền sản phẩm. Đầu vào đòi 2 tham số: `price` dạng float (giá 1 sản phẩm) và `quantity` dạng int (số lượng sản phẩm). Trả về tổng tiền (vnd) của các sản phẩm đó.",
+        "parameters": "price: float, quantity: int"
     }
 ]

@@ -76,6 +76,12 @@ def run_tests():
             "level": "Ngoại lệ",
             "desc": "Hội thoại thông thường không cần Tool",
             "query": "Chào em, dạo này em bán hàng có tốt không? Có hay bị kẹt đơn không?"
+        },
+        {
+            "id": 6,
+            "level": "Tính toán",
+            "desc": "Test Tool Tính tổng tiền mới",
+            "query": "Tính giúp tôi tổng tiền nếu tôi mua 5 chiếc điện thoại iPhone, giá mỗi cái là 25000000 VND."
         }
     ]
 
@@ -84,11 +90,11 @@ def run_tests():
         print("📋 MENU CHỌN TEST CASE ".center(60, "="))
         for tc in test_cases:
             print(f"[{tc['id']}] Khúc {tc['level']} - {tc['desc']}")
-        print("[0] Chạy TẤT CẢ 5 Test Cases lần lượt")
+        print("[0] Chạy TẤT CẢ 6 Test Cases lần lượt")
         print("[q] Thoát chương trình")
         print("="*60)
         
-        choice = input("👉 Mời nhập ID (0-5, hoặc 'q'): ").strip().lower()
+        choice = input("👉 Mời nhập ID (0-6, hoặc 'q'): ").strip().lower()
         
         if choice == 'q' or choice == 'quit':
             print("👋 Đã thoát test.")
@@ -102,10 +108,10 @@ def run_tests():
             
         if choice_int == 0:
             target_cases = test_cases
-        elif 1 <= choice_int <= 5:
+        elif 1 <= choice_int <= 6:
             target_cases = [test_cases[choice_int - 1]]
         else:
-            print("❌ Không có test case này. Vui lòng nhập từ 0-5.")
+            print("❌ Không có test case này. Vui lòng nhập từ 0-6.")
             continue
 
         for tc in target_cases:
