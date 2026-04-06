@@ -1,7 +1,12 @@
 # Group Report: Lab 3 - Production-Grade Agentic System
 
 - **Team Name**: 06
-- **Team Members**: Duong Manh Kien, Bui Quang Hai, Vu Trung Lap, Ta Vinh Phuc, Nguyen Hieu
+- **Team Members**:
+  - Tạ Vĩnh Phúc - 2A202600424
+  - Bùi Quang Hải - 2A202600006
+  - Nguyễn Văn Hiếu - 2A202600454
+  - Vũ Trung Lập - 2A202600347
+  - Dương Mạnh Kiên - 2A202600048
 - **Deployment Date**: 2026-04-06
 
 ---
