@@ -55,6 +55,21 @@ def create_provider(provider_name: str, model_name: Optional[str] = None):
     raise ValueError("Unsupported provider. Use one of: openai | google | local")
 
 
+def _print_session_summary():
+    summary = tracker.get_session_summary()
+    if not summary:
+        return
+    print("\n" + "="*60)
+    print("📊 SESSION SUMMARY")
+    print(f"   LLM calls      : {summary['calls']}")
+    print(f"   Prompt tokens  : {summary['prompt_tokens']:,}")
+    print(f"   Output tokens  : {summary['completion_tokens']:,}")
+    print(f"   Total tokens   : {summary['total_tokens']:,}")
+    print(f"   Estimated cost : ${summary['total_cost_usd']:.6f} USD")
+    print(f"   Total latency  : {summary['total_latency_ms']:,} ms")
+    print("="*60 + "\n")
+
+
 def run_once(user_input: str, provider_name: str, model_name: Optional[str] = None) -> str:
     llm = create_provider(provider_name=provider_name, model_name=model_name)
     result = llm.generate(user_input, system_prompt=BASELINE_SYSTEM_PROMPT)
@@ -75,6 +90,15 @@ def run_once(user_input: str, provider_name: str, model_name: Optional[str] = No
         },
     )
 
+    usage = result.get("usage", {})
+    cost = tracker._calculate_cost(llm.model_name, usage)
+    print(
+        f"[tokens: prompt={usage.get('prompt_tokens', 0):,} "
+        f"output={usage.get('completion_tokens', 0):,} "
+        f"total={usage.get('total_tokens', 0):,} | "
+        f"cost=${cost:.6f} USD | "
+        f"latency={result.get('latency_ms', 0):,}ms]"
+    )
     return result.get("content", "")
 
 
@@ -87,12 +111,14 @@ def interactive_chat(provider_name: str, model_name: Optional[str] = None):
         try:
             user_input = input("You: ").strip()
         except EOFError:
+            _print_session_summary()
             print("\nSession ended.")
             break
 
         if not user_input:
             continue
         if user_input.lower() in {"exit", "quit"}:
+            _print_session_summary()
             print("Goodbye.")
             break
 
@@ -114,6 +140,15 @@ def interactive_chat(provider_name: str, model_name: Optional[str] = None):
                 },
             )
             safe_print(f"Assistant: {result.get('content', '').strip()}\n")
+            usage = result.get("usage", {})
+            cost = tracker._calculate_cost(llm.model_name, usage)
+            print(
+                f"[tokens: prompt={usage.get('prompt_tokens', 0):,} "
+                f"output={usage.get('completion_tokens', 0):,} "
+                f"total={usage.get('total_tokens', 0):,} | "
+                f"cost=${cost:.6f} USD | "
+                f"latency={result.get('latency_ms', 0):,}ms]\n"
+            )
         except Exception as exc:
             logger.log_event("CHATBOT_ERROR", {"error": str(exc)})
             print(f"Error: {exc}\n")
