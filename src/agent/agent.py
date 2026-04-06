@@ -123,7 +123,7 @@ class ReActAgent:
         """
         try:
             # Local import dể tránh rác context. Khởi tạo kết nối toolkit.
-            from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping
+            from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping, calc_total_price
             
             if tool_name == "check_stock":
                 # args thường có dạng 'iphone' hoặc "iphone"
@@ -146,6 +146,16 @@ class ReActAgent:
                 res = calc_shipping(weight, dest)
                 return str(res)
                 
+            elif tool_name == "calc_total_price":
+                # args ví dụ: 15000000, 2 (price, quantity)
+                split_args = [a.strip("'\" ") for a in args.split(",")]
+                if len(split_args) < 2:
+                    return "ERROR: calc_total_price cần 2 tham số: price, quantity"
+                price = float(split_args[0])
+                quantity = int(split_args[1])
+                res = calc_total_price(price, quantity)
+                return str(res)
+
             else:
                 return f"ERROR: Tool '{tool_name}' không tồn tại. Hãy chắc chắn bạn gọi tool có trong list."
         except Exception as e:
