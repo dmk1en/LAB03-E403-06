@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from src.agent.agent import ReActAgent
 from src.tools.ecommerce_tools import ECOMMERCE_TOOLS_SPEC
 from src.core.openai_provider import OpenAIProvider
+from src.telemetry.metrics import tracker
 # from src.core.local_provider import LocalProvider
 # from src.core.gemini_provider import GeminiProvider
 
@@ -111,12 +112,26 @@ def run_tests():
             print(f"🔥 ĐANG CHẠY TEST CASE {tc['id']} | Độ khó: [{tc['level']}] - {tc['desc']}")
             print(f"👤 USER: {tc['query']}")
             print("="*80)
-            
+
+            # Reset per-run token tracking
+            tracker.reset_session()
+
             # Khởi chạy Agent thay vì phải reset history (vì logic lab 3 mỗi run là 1 query mới)
             final_response = agent.run(tc['query'])
-            
+
             print("\n" + "*"*80)
             print(f"🏆 FINAL ANSWER {tc['id']}:\n {final_response}")
+
+            # Token & cost summary
+            summary = tracker.get_session_summary()
+            if summary:
+                print(f"\n📊 TOKEN & COST SUMMARY (Test Case {tc['id']}):")
+                print(f"   LLM calls      : {summary['calls']}")
+                print(f"   Prompt tokens  : {summary['prompt_tokens']:,}")
+                print(f"   Output tokens  : {summary['completion_tokens']:,}")
+                print(f"   Total tokens   : {summary['total_tokens']:,}")
+                print(f"   Estimated cost : ${summary['total_cost_usd']:.6f} USD")
+                print(f"   Total latency  : {summary['total_latency_ms']:,} ms")
             print("*"*80 + "\n")
             
             if choice_int == 0:  # Pause một chút nếu chạy toàn bộ 5 case để API đỡ nóng
