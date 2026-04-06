@@ -18,22 +18,27 @@ class ReActAgent:
 
     def get_system_prompt(self) -> str:
         """
-        TODO: Implement the system prompt that instructs the agent to follow ReAct.
-        Should include:
-        1.  Available tools and their descriptions.
-        2.  Format instructions: Thought, Action, Observation.
+        System prompt áp dụng cấu trúc 5 phần (Identity, Capabilities, Instructions, Constraints, Output format)
+        giúp Agent hoạt động ổn định và bám sát định dạng ReAct.
         """
         tool_descriptions = "\n".join([f"- {t['name']}: {t['description']}" for t in self.tools])
+        
         return f"""
-        You are an intelligent assistant. You have access to the following tools:
-        {tool_descriptions}
-
-        Use the following format:
-        Thought: your line of reasoning.
+        1. Identity: "You are a helpful and precise E-commerce Assistant."
+        
+        2. Capabilities: "Tools available to you:
+        {tool_descriptions}"
+        
+        3. Instructions: "Break goals into sub-tasks. Think step-by-step. Always use tools to fetch real data (stock, discount, shipping). Stop khi đã thu thập đủ evidence."
+        
+        4. Constraints: "Max {self.max_steps} tool calls. Never invent or hallucinate product details, prices, or stock. Nếu không tìm thấy thông tin, hãy nói rõ."
+        
+        5. Output format: "You must strictly follow this exact ReAct format for your output:
+        Thought: your line of reasoning about what to do next.
         Action: tool_name(arguments)
-        Observation: result of the tool call.
+        Observation: result of the tool call (Wait for user/system to provide this).
         ... (repeat Thought/Action/Observation if needed)
-        Final Answer: your final response.
+        Final Answer: your final comprehensive response to the user."
         """
 
     def run(self, user_input: str) -> str:
@@ -90,7 +95,6 @@ class ReActAgent:
             steps += 1
             
         logger.log_event("AGENT_END", {"steps": steps})
-        return "Not implemented. Fill in the TODOs!"
 
     def _execute_tool(self, tool_name: str, args: str) -> str:
         """
