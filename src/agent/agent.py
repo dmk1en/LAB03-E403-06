@@ -16,6 +16,7 @@ class ReActAgent:
         self.tools = tools
         self.max_steps = max_steps
         self.history = []
+        self.trace: List[Dict[str, Any]] = []  # populated during run()
 
     def get_system_prompt(self) -> str:
         """
@@ -45,7 +46,8 @@ class ReActAgent:
         3. Append Observation to prompt and repeat until Final Answer.
         """
         logger.log_event("AGENT_START", {"input": user_input, "model": self.llm.model_name})
-        
+        self.trace = []
+
         system_prompt = self.get_system_prompt()
         current_prompt = user_input
         steps = 0
@@ -66,35 +68,45 @@ class ReActAgent:
             logger.log_event("AGENT_THOUGHT", {"step": steps, "content": content})
             # Print for visual trace
             print(f"---\n🧠 Bước {steps+1}:\n{content.strip()}")
-            
+
+            step_entry: Dict[str, Any] = {"step": steps + 1, "thought": content.strip()}
+
             # 1. Parse Final Answer
             if "Final Answer:" in content:
                 final_answer_match = re.search(r'Final Answer:\s*(.*)', content, re.DOTALL)
                 if final_answer_match:
                     ans = final_answer_match.group(1).strip()
+                    step_entry["final_answer"] = ans
+                    self.trace.append(step_entry)
                     logger.log_event("AGENT_END", {"steps": steps, "answer": ans})
                     return ans
-                    
+
             # 2. Parse Action and Tool
             # We look for: Action: tool_name(arg1, arg2)
             action_match = re.search(r'Action:\s*([A-Za-z0-9_]+)\((.*?)\)', content)
             if action_match:
                 tool_name = action_match.group(1).strip()
                 args_str = action_match.group(2).strip()
-                
+
                 logger.log_event("AGENT_ACTION", {"tool": tool_name, "args": args_str})
-                
+
                 # Execute Tool
                 obs = self._execute_tool(tool_name, args_str)
                 logger.log_event("AGENT_OBSERVATION", {"observation": obs})
                 print(f"🔍 Trải nghiệm (Observation): {obs}")
-                
+
+                step_entry["action"] = f"{tool_name}({args_str})"
+                step_entry["observation"] = obs
+
                 # Pass back the loop
                 current_prompt += f"\n\n{content}\nObservation: {obs}\n"
             else:
                 # LLM bị ảo giác, không tuân thủ định dạng
                 logger.log_event("AGENT_ERROR_FORMAT", {"content": content})
+                step_entry["error"] = "Format error – missing Action or Final Answer"
                 current_prompt += f"\n\n{content}\nObservation: ERROR - Bạn đã quên định dạng (Action: tool_name(args)) hoặc quên gọi Final Answer:. Vui lòng tuân thủ chặt chẽ định dạng.\n"
+
+            self.trace.append(step_entry)
 
             steps += 1
             
