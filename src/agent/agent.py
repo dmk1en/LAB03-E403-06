@@ -68,6 +68,10 @@ class ReActAgent:
             result = self.llm.generate(current_prompt, system_prompt=system_prompt)
             content = result.get("content", "")
 
+            # Tránh Ảo Giác: LLM tự sinh ra Observation thay vì đợi Tool chạy
+            if "Observation:" in content:
+                content = content.split("Observation:")[0].strip()
+
             # Track token usage and cost
             tracker.track_request(
                 provider=result.get("provider", "unknown"),
@@ -153,20 +157,24 @@ class ReActAgent:
             # Local import dể tránh rác context. Khởi tạo kết nối toolkit.
             from src.tools.ecommerce_tools import check_stock, get_discount, calc_shipping, calc_total_price, convert_currency
             
+            # Xử lý args chung để lọc bỏ các tên biến (VD: weight=5.0 -> 5.0)
+            raw_args = args.split(",")
+            split_args = []
+            for a in raw_args:
+                a = a.strip()
+                if "=" in a:
+                    a = a.split("=", 1)[1]
+                split_args.append(a.strip("'\" "))
+
             if tool_name == "check_stock":
-                # args thường có dạng 'iphone' hoặc "iphone"
-                clean_arg = args.strip("'\" ")
-                res = check_stock(clean_arg)
+                res = check_stock(split_args[0] if split_args else "")
                 return str(res)
                 
             elif tool_name == "get_discount":
-                clean_arg = args.strip("'\" ")
-                res = get_discount(clean_arg)
+                res = get_discount(split_args[0] if split_args else "")
                 return str(res)
                 
             elif tool_name == "calc_shipping":
-                # args ví dụ: 2.5, 'Hanoi'
-                split_args = [a.strip("'\" ") for a in args.split(",")]
                 if len(split_args) < 2:
                     return "ERROR: calc_shipping cần đúng 2 tham số: weight, destination"
                 weight = float(split_args[0])
@@ -175,8 +183,6 @@ class ReActAgent:
                 return str(res)
                 
             elif tool_name == "calc_total_price":
-                # args ví dụ: 15000000, 2 (price, quantity)
-                split_args = [a.strip("'\" ") for a in args.split(",")]
                 if len(split_args) < 2:
                     return "ERROR: calc_total_price cần 2 tham số: price, quantity"
                 price = float(split_args[0])
@@ -185,7 +191,6 @@ class ReActAgent:
                 return str(res)
                 
             elif tool_name == "convert_currency":
-                split_args = [a.strip("'\" ") for a in args.split(",")]
                 if len(split_args) < 3:
                     return "ERROR: convert_currency cần đúng 3 tham số: amount, from_currency, to_currency"
                 try:
